@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>學校資料顯示與排序</title>
+        
+        <!-- 引入 Bootstrap CSS -->
+        <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+        
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 20px;
+                background-color: #f4f4f4;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 20px 0;
+            }
+            table, th, td {
+                border: 1px solid #ddd;
+            }
+            th, td {
+                padding: 12px;
+                text-align: left;
+            }
+            th {
+                background-color: #007bff; /* 藍色背景 */
+                color: white;
+                cursor: pointer;
+            }
+            th:hover {
+                background-color: #0056b3; /* 深藍色 */
+            }
+            .search-container {
+                margin-bottom: 20px;
+            }
+            .search-input {
+                padding: 10px;
+                width: 300px;
+                font-size: 16px;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+            }
+            .sort-arrow {
+                margin-left: 8px;
+                font-size: 16px; /* 調整箭頭的字體大小 */
+                font-weight: bold; /* 使箭頭字體加粗 */
+            }
+            .up-arrow {
+                color: red; /* 上箭頭紅色 */
+            }
+            .down-arrow {
+                color: #32CD32; /* 更亮的綠色 */
+            }
+        </style>
+    </head>
+    
+    
+    <body>
+
+        <!-- Bootstrap Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <a class="navbar-brand" href="#">API練習</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">股票</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="AQI.html">空氣品質</a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link" href="School.html">全國高中資料 <span class="sr-only">(current)</span></a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    
+        <div id="schoolData">
+            <h1 class="my-5">全國高中資料</h1>
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="搜尋學校名稱..." oninput="filterTable()">
+            </div>
+            <table id="schoolDataTable" class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable(0)">學校代碼 <span id="arrow0" class="sort-arrow"></span></th>
+                        <th onclick="sortTable(1)">學校名稱 <span id="arrow1" class="sort-arrow"></span></th>
+                        <th onclick="sortTable(2)">科系名稱 <span id="arrow2" class="sort-arrow"></span></th>
+                        <th onclick="sortTable(3)">學年度 <span id="arrow3" class="sort-arrow"></span></th>
+                        <th onclick="sortTable(4)">一年級女學生數 <span id="arrow4" class="sort-arrow"></span></th>
+                        <th onclick="sortTable(5)">一年級男學生數 <span id="arrow5" class="sort-arrow"></span></th>
+                        <th onclick="sortTable(6)">二年級女學生數 <span id="arrow6" class="sort-arrow"></span></th>
+                        <th onclick="sortTable(7)">二年級男學生數 <span id="arrow7" class="sort-arrow"></span></th>
+                        <th onclick="sortTable(8)">三年級女學生數 <span id="arrow8" class="sort-arrow"></span></th>
+                        <th onclick="sortTable(9)">三年級男學生數 <span id="arrow9" class="sort-arrow"></span></th>
+                        <th onclick="sortTable(10)">四年級女學生數 <span id="arrow10" class="sort-arrow"></span></th>
+                        <th onclick="sortTable(11)">四年級男學生數 <span id="arrow11" class="sort-arrow"></span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 學校資料將動態顯示在這裡 -->
+                </tbody>
+            </table>
+        </div>
+    
+        <div id="otherData">
+            <h2>其他資料</h2>
+            <p>這裡顯示其他的資料...</p>
+        </div>
+    
+        <!-- 引入 Bootstrap JavaScript -->
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+        <script>
+            let schoolData = [];  // 用來儲存所有的學校資料
+            let sortDirections = Array(12).fill(true); // 用來儲存每一列的排序方向 (true = 升冪, false = 降冪)
+    
+            // 從 API 獲取學校資料
+            fetch('https://stats.moe.gov.tw/files/detail/112/112_base2.json')
+                .then(response => response.json())  // 解析 JSON 格式的回應
+                .then(data => {
+                    schoolData = data;  // 儲存資料
+                    const tableBody = document.querySelector('#schoolDataTable tbody');
+    
+                    // 遍歷每條學校資料並生成表格行
+                    data.forEach(school => {
+                        const row = document.createElement('tr');
+    
+                        row.innerHTML = `
+                            <td>${school['學校代碼']}</td>
+                            <td>${school['學校名稱']}</td>
+                            <td>${school['科系名稱']}</td>
+                            <td>${school['學年度']}</td>
+                            <td>${school['一年級女學生數']}</td>
+                            <td>${school['一年級男學生數']}</td>
+                            <td>${school['二年級女學生數']}</td>
+                            <td>${school['二年級男學生數']}</td>
+                            <td>${school['三年級女學生數']}</td>
+                            <td>${school['三年級男學生數']}</td>
+                            <td>${school['四年級女學生數']}</td>
+                            <td>${school['四年級男學生數']}</td>
+                        `;
+                        tableBody.appendChild(row);  // 將行加入表格中
+                    });
+                })
+                .catch(error => {
+                    console.error('獲取學校資料錯誤:', error);
+                });
+    
+            // 搜尋過濾函式
+            function filterTable() {
+                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+                const rows = document.querySelectorAll('#schoolDataTable tbody tr');
+                
+                rows.forEach(row => {
+                    const schoolNameCell = row.cells[1].textContent.toLowerCase();
+    
+                    // 檢查是否包含搜尋關鍵字
+                    if (schoolNameCell.includes(searchTerm)) {
+                        row.style.display = '';  // 顯示符合條件的行
+                    } else {
+                        row.style.display = 'none';  // 隱藏不符合的行
+                    }
+                });
+            }
+    
+            // 排序函式
+            function sortTable(columnIndex) {
+                const tableBody = document.querySelector('#schoolDataTable tbody');
+                const rows = Array.from(tableBody.rows);
+    
+                const ascending = sortDirections[columnIndex];
+    
+                rows.sort((rowA, rowB) => {
+                    const cellA = rowA.cells[columnIndex].textContent;
+                    const cellB = rowB.cells[columnIndex].textContent;
+    
+                    let valueA = isNaN(cellA) ? cellA : parseFloat(cellA.replace(/,/g, ''));
+                    let valueB = isNaN(cellB) ? cellB : parseFloat(cellB.replace(/,/g, ''));
+    
+                    if (ascending) {
+                        return valueA > valueB ? 1 : valueA < valueB ? -1 : 0;
+                    } else {
+                        return valueA < valueB ? 1 : valueA > valueB ? -1 : 0;
+                    }
+                });
+    
+                sortDirections[columnIndex] = !ascending;
+                updateArrows(columnIndex, ascending);
+                rows.forEach(row => tableBody.appendChild(row));
+            }
+    
+            function updateArrows(columnIndex, ascending) {
+                for (let i = 0; i < 12; i++) {
+                    document.getElementById(`arrow${i}`).textContent = '';
+                    document.getElementById(`arrow${i}`).classList.remove('up-arrow', 'down-arrow');
+                }
+    
+                const arrow = document.getElementById(`arrow${columnIndex}`);
+                if (ascending) {
+                    arrow.textContent = '↑';
+                    arrow.classList.add('up-arrow');
+                } else {
+                    arrow.textContent = '↓';
+                    arrow.classList.add('down-arrow');
+                }
+            }
+        </script>
+    
+    </body>
+    
+    
+</html>
